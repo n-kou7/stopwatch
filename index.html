@@ -14,7 +14,14 @@ function render(){app.dataset.phase=phase;restart.hidden=phase!=='revealed';show
  else if(phase==='running'){message.textContent='けいそく ちゅう！';helper.textContent='がめんの どこでも タップで ストップ！';timer.textContent=showSeconds?timeString(performance.now()-began):'？？？'}
  else{message.textContent='こたえは…';timer.textContent=timeString(elapsed);helper.textContent='なんびょう だったか あたったかな？'}
 }
-start.addEventListener('click',e=>{e.stopPropagation();if(phase!=='ready')return;began=performance.now();phase='running';render();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick)});
+function startWatch(){if(phase!=='ready')return;began=performance.now();phase='running';render();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick)}
+// 複数指タッチでも、スタートボタンに触れた瞬間に開始。
+// 伝播を止めて同じ接触でストップしないようにする。
+start.addEventListener('touchstart',e=>{e.preventDefault();e.stopPropagation();startWatch()},{passive:false});
+// マウス・Apple Pencil での開始。タッチは touchstart で処理済み。
+start.addEventListener('pointerdown',e=>{e.stopPropagation();if(e.pointerType!=='touch')startWatch()});
+// キーボード操作および旧ブラウザ向け。
+start.addEventListener('click',e=>{e.stopPropagation();startWatch()});
 function stopWatch(){if(phase!=='running')return;elapsed=performance.now()-began;phase='revealed';cancelAnimationFrame(frame);render()}
 // iPad: touchstart は複数指でも発火する。click に依存せず最初の接触で停止。
 app.addEventListener('touchstart',e=>{if(phase!=='running')return;e.preventDefault();stopWatch()},{passive:false});
